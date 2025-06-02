@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en" >
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin Panel - Blogging Site</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 1rem;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+  </style>
+</head>
+<body>
+  <main class="bg-white max-w-6xl w-full rounded-xl shadow-lg p-8 space-y-8">
+    <h1 class="text-4xl font-bold text-purple-700 text-center mb-6">Admin Panel</h1>
+
+    <section id="postManagement" class="space-y-6">
+      <h2 class="text-3xl font-semibold border-b border-gray-300 pb-1 mb-4">Manage Blog Posts</h2>
+      <form id="postForm" class="space-y-4 max-w-3xl">
+        <input type="hidden" id="postId" />
+        <div>
+          <label for="postTitle" class="block font-semibold text-gray-700 mb-1">Post Title</label>
+          <input type="text" id="postTitle" class="w-full rounded-md border border-gray-300 p-2 focus:outline-none focus:ring-2 focus:ring-purple-500" maxlength="150" required />
+        </div>
+        <div>
+          <label for="postContent" class="block font-semibold text-gray-700 mb-1">Post Content (Markdown supported)</label>
+          <textarea id="postContent" rows="6" class="w-full rounded-md border border-gray-300 p-2 focus:outline-none focus:ring-2 focus:ring-purple-500" required></textarea>
+        </div>
+        <div class="flex gap-4">
+          <button type="submit" id="savePostBtn" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-md font-semibold transition">Save Post</button>
+          <button type="button" id="resetPostBtn" class="bg-gray-300 hover:bg-gray-400 text-gray-900 px-6 py-2 rounded-md font-semibold transition">Clear</button>
+        </div>
+      </form>
+
+      <div id="postsList" class="max-h-96 overflow-y-auto border border-gray-300 rounded-md p-4 space-y-3">
+        <!-- List of posts with edit/delete buttons goes here -->
+        <p class="text-gray-500 text-center">Loading posts...</p>
+      </div>
+    </section>
+
+    <section id="userInteractions" class="space-y-6">
+      <h2 class="text-3xl font-semibold border-b border-gray-300 pb-1 mb-4">User Login & Interaction Details</h2>
+      <div id="userLoginsList" class="max-h-96 overflow-y-auto border border-gray-300 rounded-md p-4 space-y-2">
+        <p class="text-gray-500 text-center">Loading user data...</p>
+      </div>
+    </section>
+
+    <div class="flex justify-center pt-4">
+      <button id="logoutBtn" class="bg-red-600 hover:bg-red-700 text-white font-semibold px-6 py-2 rounded-md shadow-md transition">Logout</button>
+    </div>
+  </main>
+
+<script>
+  // Firebase config - change to your config!
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT.firebaseapp.com",
+    projectId: "YOUR_PROJECT",
+    storageBucket: "YOUR_PROJECT.appspot.com",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId: "YOUR_APP_ID"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  const adminEmails = ["paramasivamsk2811@gmail.com", "sathishkavi1517@gmail.com"];
+
+  const postForm = document.getElementById("postForm");
+  const postIdInput = document.getElementById("postId");
+  const postTitleInput = document.getElementById("postTitle");
+  const postContentInput = document.getElementById("postContent");
+  const savePostBtn = document.getElementById("savePostBtn");
+  const resetPostBtn = document.getElementById("resetPostBtn");
+  const postsList = document.getElementById("postsList");
+
+  const userLoginsList = document.getElementById("userLoginsList");
+  const logoutBtn = document.getElementById("logoutBtn");
+
+  let editingPostId = null;
+
+  function showMessage(msg, isError = false) {
+    alert(msg); // For simplicity, replace with better UI if desired.
+  }
+
+  // Check Auth and Admin access
+  auth.onAuthStateChanged(user => {
+    if (!user) {
+      window.location.href = "login.html";
+      return;
+    }
+    if (!adminEmails.includes(user.email)) {
+      alert("Access denied. Admins only.");
+      auth.signOut();
+      window.location.href = "login.html";
+      return;
+    }
+
+    // Load posts and user logins
+    loadPosts();
+    loadUserLogins();
+  });
+
+  // Load posts from Firestore
+  async function loadPosts() {
+    postsList.innerHTML = "<p class='text-gray-500 text-center'>Loading posts...</p>";
+    try {
+      const snapshot = await db.collection("posts").orderBy("createdAt", "desc").get();
+      if (snapshot.empty) {
+        postsList.innerHTML = "<p class='text-gray-500 text-center'>No posts found.</p>";
+        return;
+      }
+      postsList.innerHTML = "";
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const div = document.createElement("div");
+        div.className = "border border-gray-300 rounded-md p-4 bg-purple-50 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3";
+
+        const titleEl = document.createElement("div");
+        titleEl.className = "font-semibold text-lg text-purple-700";
+        titleEl.textContent = data.title || "(Untitled)";
+        
+        const buttonsDiv = document.createElement("div");
+        buttonsDiv.className = "flex gap-2";
+
+        const editBtn = document.createElement("button");
+        editBtn.className = "bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-1 rounded-md font-semibold";
+        editBtn.textContent = "Edit";
+        editBtn.addEventListener("click", () => {
+          editingPostId = doc.id;
+          postIdInput.value = doc.id;
+          postTitleInput.value = data.title || "";
+          postContentInput.value = data.content || "";
+          savePostBtn.textContent = "Update Post";
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        });
+
+        const deleteBtn = document.createElement("button");
+        deleteBtn.className = "bg-red-600 hover:bg-red-700 text-white px-4 py-1 rounded-md font-semibold";
+        deleteBtn.textContent = "Delete";
+        deleteBtn.addEventListener("click", async () => {
+          if (confirm(`Delete post "${data.title || "(Untitled)"}"? This action cannot be undone.`)) {
+            try {
+              await db.collection("posts").doc(doc.id).delete();
+              showMessage("Post deleted.");
+              if (editingPostId === doc.id) resetForm();
+              loadPosts();
+            } catch (err) {
+              showMessage("Failed to delete post: " + err.message, true);
+            }
+          }
+        });
+
+        buttonsDiv.appendChild(editBtn);
+        buttonsDiv.appendChild(deleteBtn);
+
+        div.appendChild(titleEl);
+        div.appendChild(buttonsDiv);
+
+        postsList.appendChild(div);
+      });
+    } catch (err) {
+      postsList.innerHTML = "<p class='text-red-600 text-center'>Failed to load posts: " + err.message + "</p>";
+    }
+  }
+
+  // Reset form to default state
+  function resetForm() {
+    editingPostId = null;
+    postIdInput.value = "";
+    postTitleInput.value = "";
+    postContentInput.value = "";
+    savePostBtn.textContent = "Save Post";
+  }
+
+  resetPostBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    resetForm();
+  });
+
+  // Handle post form submit (create/update)
+  postForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const title = postTitleInput.value.trim();
+    const content = postContentInput.value.trim();
+    if (!title || !content) {
+      showMessage("Post title and content are required.", true);
+      return;
+    }
+
+    try {
+      if (editingPostId) {
+        // Update existing post
+        await db.collection("posts").doc(editingPostId).update({
+          title,
+          content,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        showMessage("Post updated successfully.");
+      } else {
+        // Create new post
+        await db.collection("posts").add({
+          title,
+          content,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        showMessage("Post created successfully.");
+      }
+      resetForm();
+      loadPosts();
+    } catch (err) {
+      showMessage("Failed to save post: " + err.message, true);
+    }
+  });
+
+  // Load user login info and interactions
+  async function loadUserLogins() {
+    userLoginsList.innerHTML = "<p class='text-gray-500 text-center'>Loading user data...</p>";
+    try {
+      const snapshot = await db.collection("users").orderBy("lastLogin", "desc").get();
+      if (snapshot.empty) {
+        userLoginsList.innerHTML = "<p class='text-gray-500 text-center'>No users found.</p>";
+        return;
+      }
+      userLoginsList.innerHTML = "";
+      snapshot.forEach(doc => {
+        const userData = doc.data();
+        const div = document.createElement("div");
+        div.className = "border border-gray-300 rounded-md p-3 bg-purple-50";
+
+        const emailDiv = document.createElement("p");
+        emailDiv.innerHTML = `<span class="font-semibold">Email:</span> ${userData.email || "(no email)"}`;
+        const nameDiv = document.createElement("p");
+        if (userData.name) nameDiv.innerHTML = `<span class="font-semibold">Name:</span> ${userData.name}`;
+
+        const lastLoginDiv = document.createElement("p");
+        if (userData.lastLogin) {
+          const d = userData.lastLogin.toDate();
+          lastLoginDiv.innerHTML = `<span class="font-semibold">Last Login:</span> ${d.toLocaleString()}`;
+        }
+
+        const timeSpentDiv = document.createElement("p");
+        if (userData.timeSpent) {
+          const ms = userData.timeSpent;
+          let seconds = Math.floor(ms/1000);
+          let hours = Math.floor(seconds / 3600);
+          let minutes = Math.floor((seconds % 3600) / 60);
+          seconds = seconds % 60;
+          let timeStr = [];
+          if(hours) timeStr.push(hours + "h");
+          if(minutes) timeStr.push(minutes + "m");
+          if(seconds || timeStr.length === 0) timeStr.push(seconds + "s");
+          timeSpentDiv.innerHTML = `<span class="font-semibold">Time Spent:</span> ${timeStr.join(" ")}`;
+        }
+
+        const likedPostsDiv = document.createElement("p");
+        if (Array.isArray(userData.likedPosts)) {
+          likedPostsDiv.innerHTML = `<span class="font-semibold">Liked Posts:</span> ${userData.likedPosts.length}`;
+        }
+
+        div.appendChild(emailDiv);
+        if(userData.name) div.appendChild(nameDiv);
+        if(userData.lastLogin) div.appendChild(lastLoginDiv);
+        if(userData.timeSpent) div.appendChild(timeSpentDiv);
+        if(Array.isArray(userData.likedPosts)) div.appendChild(likedPostsDiv);
+
+        userLoginsList.appendChild(div);
+      });
+    } catch (err) {
+      userLoginsList.innerHTML = "<p class='text-red-600 text-center'>Failed to load user data: " + err.message + "</p>";
+    }
+  }
+
+  logoutBtn.addEventListener("click", async () => {
+    try {
+      await auth.signOut();
+      window.location.href = "login.html";
+    } catch (err) {
+      alert("Logout failed: " + err.message);
+    }
+  });
+</script>
+</body>
+</html>
