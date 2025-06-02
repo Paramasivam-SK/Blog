@@ -95,18 +95,21 @@
   }
 
   // Check Auth and Admin access
-  auth.onAuthStateChanged(user => {
-    if (!user) {
-      window.location.href = "login.html";
-      return;
-    }
-    if (!adminEmails.includes(user.email)) {
-      alert("Access denied. Admins only.");
-      auth.signOut();
-      window.location.href = "login.html";
-      return;
-    }
-
+auth.onAuthStateChanged(user => {
+  console.log("Auth state changed, user:", user);
+  if (!user) {
+    console.log("No user, redirect to login");
+    window.location.href = "login.html";
+    return;
+  }
+  const userEmail = user.email.toLowerCase();
+  console.log("User email:", userEmail);
+  if (!adminEmails.includes(userEmail)) {
+    alert("Access denied. Admins only.");
+    auth.signOut();
+    window.location.href = "login.html";
+    return;
+  }
     // Load posts and user logins
     loadPosts();
     loadUserLogins();
