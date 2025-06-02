@@ -77,12 +77,13 @@
   }
 
   function showStatusMessage(msg, isError = false) {
-    alert(msg); // For simplicity, use alert; alternatively can create a styled notification
+    alert(msg); // For simplicity, use alert; alternatively, create a styled notification
   }
 
   auth.onAuthStateChanged(async user => {
+    console.log("Auth state changed in profile.html; user:", user);
     if (!user) {
-      // Not logged in, redirect to login page
+      console.warn("No user signed in; redirecting to login");
       window.location.href = "login.html";
       return;
     }
@@ -153,4 +154,3 @@
 </script>
 </body>
 </html>
-
