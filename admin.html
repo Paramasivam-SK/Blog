@@ -1,11 +1,10 @@
 <!DOCTYPE html>
-<html lang="en" >
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Admin Panel - Blogging Site</title>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
@@ -42,13 +41,12 @@
       </form>
 
       <div id="postsList" class="max-h-96 overflow-y-auto border border-gray-300 rounded-md p-4 space-y-3">
-        <!-- List of posts with edit/delete buttons goes here -->
         <p class="text-gray-500 text-center">Loading posts...</p>
       </div>
     </section>
 
     <section id="userInteractions" class="space-y-6">
-      <h2 class="text-3xl font-semibold border-b border-gray-300 pb-1 mb-4">User Login & Interaction Details</h2>
+      <h2 class="text-3xl font-semibold border-b border-gray-300 pb-1 mb-4">User  Interaction Details</h2>
       <div id="userLoginsList" class="max-h-96 overflow-y-auto border border-gray-300 rounded-md p-4 space-y-2">
         <p class="text-gray-500 text-center">Loading user data...</p>
       </div>
@@ -63,7 +61,6 @@
   // Firebase config - update with your config!
   const firebaseConfig = {
     apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT.firebaseapp.com",
     projectId: "YOUR_PROJECT",
     storageBucket: "YOUR_PROJECT.appspot.com",
     messagingSenderId: "YOUR_SENDER_ID",
@@ -71,11 +68,7 @@
   };
 
   firebase.initializeApp(firebaseConfig);
-
-  const auth = firebase.auth();
   const db = firebase.firestore();
-
-  const adminEmails = ["paramasivamsk2811@gmail.com", "sathishkavi1517@gmail.com"];
 
   const postForm = document.getElementById("postForm");
   const postIdInput = document.getElementById("postId");
@@ -84,34 +77,13 @@
   const savePostBtn = document.getElementById("savePostBtn");
   const resetPostBtn = document.getElementById("resetPostBtn");
   const postsList = document.getElementById("postsList");
-
   const userLoginsList = document.getElementById("userLoginsList");
-  const logoutBtn = document.getElementById("logoutBtn");
 
   let editingPostId = null;
 
   function showMessage(msg, isError = false) {
     alert(msg);
   }
-
-  auth.onAuthStateChanged(user => {
-    console.log("Auth state changed in admin.html; user:", user);
-    if (!user) {
-      console.warn("No user signed in; redirecting to login");
-      window.location.href = "login.html";
-      return;
-    }
-    if (!adminEmails.includes(user.email)) {
-      alert("Access denied. Admins only.");
-      auth.signOut();
-      window.location.href = "login.html";
-      return;
-    }
-
-    // Load posts and user login info
-    loadPosts();
-    loadUserLogins();
-  });
 
   // Load posts from Firestore
   async function loadPosts() {
@@ -225,8 +197,8 @@
     }
   });
 
-  // Load user login info and interactions
-  async function loadUserLogins() {
+  // Load user interaction info
+  async function loadUser Logins() {
     userLoginsList.innerHTML = "<p class='text-gray-500 text-center'>Loading user data...</p>";
     try {
       const snapshot = await db.collection("users").orderBy("lastLogin", "desc").get();
@@ -283,14 +255,8 @@
     }
   }
 
-  logoutBtn.addEventListener("click", async () => {
-    try {
-      await auth.signOut();
-      window.location.href = "login.html";
-    } catch (err) {
-      alert("Logout failed: " + err.message);
-    }
-  });
+  loadPosts();
+  loadUser Logins();
 </script>
 </body>
 </html>
