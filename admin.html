@@ -46,7 +46,7 @@
     </section>
 
     <section id="userInteractions" class="space-y-6">
-      <h2 class="text-3xl font-semibold border-b border-gray-300 pb-1 mb-4">User Interaction Details</h2>
+      <h2 class="text-3xl font-semibold border-b border-gray-300 pb-1 mb-4">User  Interaction Details</h2>
       <div id="userLoginsList" class="max-h-96 overflow-y-auto border border-gray-300 rounded-md p-4 space-y-2">
         <p class="text-gray-500 text-center">Loading user data...</p>
       </div>
@@ -61,6 +61,7 @@
   // Firebase config - update with your config!
   const firebaseConfig = {
     apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT.firebaseapp.com",
     projectId: "YOUR_PROJECT",
     storageBucket: "YOUR_PROJECT.appspot.com",
     messagingSenderId: "YOUR_SENDER_ID",
@@ -198,7 +199,7 @@
   });
 
   // Load user interaction info
-  async function loadUserLogins() {
+  async function loadUser Logins() {
     userLoginsList.innerHTML = "<p class='text-gray-500 text-center'>Loading user data...</p>";
     try {
       const snapshot = await db.collection("users").orderBy("lastLogin", "desc").get();
@@ -255,8 +256,9 @@
     }
   }
 
+  // Initial load
   loadPosts();
-  loadUserLogins();
+  loadUser Logins();
 </script>
 </body>
 </html>
