@@ -16,38 +16,40 @@
       justify-content: center;
       align-items: flex-start;
     }
+    #postsList > div:hover {
+      box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+      background-color: #f3e8ff;
+    }
   </style>
 </head>
 <body>
-  <main class="bg-white max-w-6xl w-full rounded-xl shadow-lg p-8 space-y-8">
+  <main class="bg-white max-w-4xl w-full rounded-xl shadow-lg p-8 space-y-8">
     <h1 class="text-4xl font-bold text-purple-700 text-center mb-6">Admin Panel</h1>
 
     <section id="postManagement" class="space-y-6">
       <h2 class="text-3xl font-semibold border-b border-gray-300 pb-1 mb-4">Manage Blog Posts</h2>
-      <form id="postForm" class="space-y-4 max-w-3xl">
+      <form id="postForm" class="space-y-4 max-w-full">
         <input type="hidden" id="postId" />
         <div>
-          <label for="postTitle" class="block font-semibold text-gray-700 mb-1">Post Title</label>
-          <input type="text" id="postTitle" class="w-full rounded-md border border-gray-300 p-2 focus:outline-none focus:ring-2 focus:ring-purple-500" maxlength="150" required />
+          <input type="text" id="postTitle" placeholder="Post Title" class="w-full rounded-md border border-gray-300 p-3 focus:outline-none focus:ring-2 focus:ring-purple-500 text-lg font-semibold" maxlength="150" required />
         </div>
         <div>
-          <label for="postContent" class="block font-semibold text-gray-700 mb-1">Post Content (Markdown supported)</label>
-          <textarea id="postContent" rows="6" class="w-full rounded-md border border-gray-300 p-2 focus:outline-none focus:ring-2 focus:ring-purple-500" required></textarea>
+          <textarea id="postContent" rows="5" placeholder="Post Content (Markdown supported)" class="w-full rounded-md border border-gray-300 p-3 focus:outline-none focus:ring-2 focus:ring-purple-500" required></textarea>
         </div>
-        <div class="flex gap-4">
-          <button type="submit" id="savePostBtn" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-md font-semibold transition">Save Post</button>
-          <button type="button" id="resetPostBtn" class="bg-gray-300 hover:bg-gray-400 text-gray-900 px-6 py-2 rounded-md font-semibold transition">Clear</button>
+        <div class="flex gap-3 justify-end">
+          <button type="button" id="resetPostBtn" class="bg-gray-300 hover:bg-gray-400 text-gray-900 px-5 py-2 rounded-md font-semibold transition">Clear</button>
+          <button type="submit" id="savePostBtn" class="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-md font-semibold transition">Save Post</button>
         </div>
       </form>
 
-      <div id="postsList" class="max-h-96 overflow-y-auto border border-gray-300 rounded-md p-4 space-y-3">
+      <div id="postsList" class="max-h-[400px] overflow-y-auto border border-gray-300 rounded-md p-4 grid gap-3">
         <p class="text-gray-500 text-center">Loading posts...</p>
       </div>
     </section>
 
     <section id="userInteractions" class="space-y-6">
-      <h2 class="text-3xl font-semibold border-b border-gray-300 pb-1 mb-4">User  Interaction Details</h2>
-      <div id="userLoginsList" class="max-h-96 overflow-y-auto border border-gray-300 rounded-md p-4 space-y-2">
+      <h2 class="text-3xl font-semibold border-b border-gray-300 pb-1 mb-4">User Interaction Details</h2>
+      <div id="userLoginsList" class="max-h-[400px] overflow-y-auto border border-gray-300 rounded-md p-4 grid gap-3">
         <p class="text-gray-500 text-center">Loading user data...</p>
       </div>
     </section>
@@ -58,7 +60,6 @@
   </main>
 
 <script>
-  // Firebase config - update with your config!
   const firebaseConfig = {
     apiKey: "YOUR_API_KEY",
     authDomain: "YOUR_PROJECT.firebaseapp.com",
@@ -79,6 +80,7 @@
   const resetPostBtn = document.getElementById("resetPostBtn");
   const postsList = document.getElementById("postsList");
   const userLoginsList = document.getElementById("userLoginsList");
+  const logoutBtn = document.getElementById("logoutBtn");
 
   let editingPostId = null;
 
@@ -86,7 +88,6 @@
     alert(msg);
   }
 
-  // Load posts from Firestore
   async function loadPosts() {
     postsList.innerHTML = "<p class='text-gray-500 text-center'>Loading posts...</p>";
     try {
@@ -99,17 +100,18 @@
       snapshot.forEach(doc => {
         const data = doc.data();
         const div = document.createElement("div");
-        div.className = "border border-gray-300 rounded-md p-4 bg-purple-50 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3";
+        div.className = "border border-gray-300 rounded-md p-3 bg-purple-50 flex justify-between items-center";
 
         const titleEl = document.createElement("div");
-        titleEl.className = "font-semibold text-lg text-purple-700";
+        titleEl.className = "font-semibold text-lg text-purple-700 truncate max-w-[70%]";
         titleEl.textContent = data.title || "(Untitled)";
-        
+        titleEl.title = titleEl.textContent;
+
         const buttonsDiv = document.createElement("div");
         buttonsDiv.className = "flex gap-2";
 
         const editBtn = document.createElement("button");
-        editBtn.className = "bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-1 rounded-md font-semibold";
+        editBtn.className = "bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded-md font-semibold";
         editBtn.textContent = "Edit";
         editBtn.addEventListener("click", () => {
           editingPostId = doc.id;
@@ -121,7 +123,7 @@
         });
 
         const deleteBtn = document.createElement("button");
-        deleteBtn.className = "bg-red-600 hover:bg-red-700 text-white px-4 py-1 rounded-md font-semibold";
+        deleteBtn.className = "bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md font-semibold";
         deleteBtn.textContent = "Delete";
         deleteBtn.addEventListener("click", async () => {
           if (confirm(`Delete post "${data.title || "(Untitled)"}"? This action cannot be undone.`)) {
@@ -145,11 +147,10 @@
         postsList.appendChild(div);
       });
     } catch (err) {
-      postsList.innerHTML = "<p class='text-red-600 text-center'>Failed to load posts: " + err.message + "</p>";
+      postsList.innerHTML = `<p class='text-red-600 text-center'>Failed to load posts: ${err.message}</p>`;
     }
   }
 
-  // Reset form to default state
   function resetForm() {
     editingPostId = null;
     postIdInput.value = "";
@@ -163,7 +164,6 @@
     resetForm();
   });
 
-  // Handle post form submit (create/update)
   postForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     const title = postTitleInput.value.trim();
@@ -173,9 +173,11 @@
       return;
     }
 
+    savePostBtn.disabled = true;
+    savePostBtn.textContent = editingPostId ? "Updating..." : "Saving...";
+
     try {
       if (editingPostId) {
-        // Update existing post
         await db.collection("posts").doc(editingPostId).update({
           title,
           content,
@@ -183,7 +185,6 @@
         });
         showMessage("Post updated successfully.");
       } else {
-        // Create new post
         await db.collection("posts").add({
           title,
           content,
@@ -192,14 +193,16 @@
         showMessage("Post created successfully.");
       }
       resetForm();
-      loadPosts();
+      await loadPosts();
     } catch (err) {
       showMessage("Failed to save post: " + err.message, true);
+    } finally {
+      savePostBtn.disabled = false;
+      savePostBtn.textContent = "Save Post";
     }
   });
 
-  // Load user interaction info
-  async function loadUser Logins() {
+  async function loadUserLogins() {
     userLoginsList.innerHTML = "<p class='text-gray-500 text-center'>Loading user data...</p>";
     try {
       const snapshot = await db.collection("users").orderBy("lastLogin", "desc").get();
@@ -252,13 +255,24 @@
         userLoginsList.appendChild(div);
       });
     } catch (err) {
-      userLoginsList.innerHTML = "<p class='text-red-600 text-center'>Failed to load user data: " + err.message + "</p>";
+      userLoginsList.innerHTML = `<p class='text-red-600 text-center'>Failed to load user data: ${err.message}</p>`;
     }
   }
 
   // Initial load
   loadPosts();
-  loadUser Logins();
+  loadUserLogins();
+
+  // Optional Logout button handling, if needed
+  // logoutBtn.addEventListener("click", async () => {
+  //   try {
+  //     await firebase.auth().signOut();
+  //     window.location.href = "login.html";
+  //   } catch (err) {
+  //     alert("Logout failed: " + err.message);
+  //   }
+  // });
 </script>
 </body>
 </html>
+
