@@ -1,10 +1,13 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" >
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>User Profile - Blogging Site</title>
-  <!-- Tailwind CSS -->
+  <!-- Firebase and Tailwind CSS -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body {
@@ -17,12 +20,12 @@
     }
   </style>
 </head>
-<body>
+<body >
   <main class="bg-white rounded-xl shadow-lg max-w-3xl w-full p-8 space-y-6">
     <h1 class="text-3xl text-purple-700 font-bold text-center">Your Profile</h1>
     <div id="user-info" class="space-y-3 text-center text-gray-800 font-semibold text-lg">
-      <p><span class="font-bold">Name / Email:</span> <span id="nameEmail">User  Name / Email</span></p>
-      <p><span class="font-bold">Time Spent on Blog:</span> <span id="timeSpent">0 seconds</span></p>
+      <p><span class="font-bold">Name / Email:</span> <span id="nameEmail">Loading...</span></p>
+      <p><span class="font-bold">Time Spent on Blog:</span> <span id="timeSpent">Loading...</span></p>
     </div>
 
     <section>
@@ -39,40 +42,26 @@
   </main>
 
 <script>
-  // Dummy data for demonstration
-  const userName = "John Doe"; // Replace with actual user name
-  const userEmail = "john.doe@example.com"; // Replace with actual user email
-  const timeSpent = 3600; // Example: 1 hour in seconds
-  const likedPosts = [
-    { id: "1", title: "First Blog Post" },
-    { id: "2", title: "Second Blog Post" }
-  ]; // Example liked posts
+  // Replace the below config with your Firebase project config
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT.firebaseapp.com",
+    projectId: "YOUR_PROJECT",
+    storageBucket: "YOUR_PROJECT.appspot.com",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId: "YOUR_APP_ID"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+
+  const auth = firebase.auth();
+  const db = firebase.firestore();
 
   const nameEmailEl = document.getElementById('nameEmail');
   const timeSpentEl = document.getElementById('timeSpent');
   const likedPostsList = document.getElementById('likedPostsList');
   const noLikesMsg = document.getElementById('noLikesMsg');
-
-  // Set user info
-  nameEmailEl.textContent = `${userName} / ${userEmail}`;
-  timeSpentEl.textContent = formatTime(timeSpent);
-
-  // Show liked posts
-  if (likedPosts.length === 0) {
-    noLikesMsg.classList.remove("hidden");
-  } else {
-    noLikesMsg.classList.add("hidden");
-    likedPosts.forEach(post => {
-      const li = document.createElement("li");
-      li.className = "border border-gray-300 rounded-md p-3 bg-purple-50 hover:bg-purple-100 cursor-pointer transition";
-      li.textContent = post.title;
-      li.addEventListener("click", () => {
-        // Redirect to post page (implement as needed)
-        window.location.href = `post.html?id=${post.id}`;
-      });
-      likedPostsList.appendChild(li);
-    });
-  }
+  const logoutBtn = document.getElementById('logoutBtn');
 
   function formatTime(ms) {
     if (!ms || ms <= 0) return "0 seconds";
@@ -87,11 +76,80 @@
     return parts.join(" ");
   }
 
-  // Logout button functionality (if needed)
-  document.getElementById("logoutBtn").addEventListener("click", () => {
-    // Implement logout logic if necessary
-    alert("Logged out successfully!");
-    window.location.href = "login.html"; // Redirect to login page
+  function showStatusMessage(msg, isError = false) {
+    alert(msg); // For simplicity, use alert; alternatively, create a styled notification
+  }
+
+  auth.onAuthStateChanged(async user => {
+    console.log("Auth state changed in profile.html; user:", user);
+    if (!user) {
+      console.warn("No user signed in; redirecting to login");
+      window.location.href = "login.html";
+      return;
+    }
+
+    // Show user email / displayName
+    const displayName = user.displayName || "";
+    const email = user.email || "";
+    nameEmailEl.textContent = displayName || email || "Unknown User";
+
+    // Fetch user profile info from Firestore
+    try {
+      const userDoc = await db.collection("users").doc(user.uid).get();
+      if (!userDoc.exists) {
+        nameEmailEl.textContent += " (profile not found)";
+        timeSpentEl.textContent = "0 seconds";
+        noLikesMsg.classList.remove("hidden");
+        return;
+      }
+      const userData = userDoc.data();
+
+      // Show time spent if available
+      if (userData.timeSpent) {
+        timeSpentEl.textContent = formatTime(userData.timeSpent);
+      } else {
+        timeSpentEl.textContent = "0 seconds";
+      }
+
+      // Show liked posts (assuming likedPosts is an array of post IDs)
+      const likedPosts = userData.likedPosts || [];
+
+      if (likedPosts.length === 0) {
+        noLikesMsg.classList.remove("hidden");
+        likedPostsList.innerHTML = "";
+        return;
+      }
+      noLikesMsg.classList.add("hidden");
+      likedPostsList.innerHTML = "";
+
+      // Fetch post titles from posts collection and show
+      for (const postId of likedPosts) {
+        const postDoc = await db.collection("posts").doc(postId).get();
+        if (postDoc.exists) {
+          const postTitle = postDoc.data().title || "Untitled post";
+          const li = document.createElement("li");
+          li.className = "border border-gray-300 rounded-md p-3 bg-purple-50 hover:bg-purple-100 cursor-pointer transition";
+          li.textContent = postTitle;
+          li.addEventListener("click", () => {
+            // Redirect to post page (implement as needed)
+            window.location.href = `post.html?id=${postId}`;
+          });
+          likedPostsList.appendChild(li);
+        }
+      }
+    } catch (err) {
+      showStatusMessage("Failed to load profile data: " + err.message, true);
+      timeSpentEl.textContent = "Error";
+    }
+  });
+
+  logoutBtn.addEventListener("click", async () => {
+    try {
+      await auth.signOut();
+      window.location.href = "login.html";
+    } catch (err) {
+      showStatusMessage("Logout failed: " + err.message, true);
+    }
   });
 </script>
 </body>
