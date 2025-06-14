@@ -1,72 +1,107 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Main Page - Blogging Site</title>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
+!DOCTYPE html>
+html lang="en" class="scroll-smooth">
+head>
+  meta charset="UTF-8" />
+  meta name="viewport" content="width=device-width, initial-scale=1" />
+  title>MyBlog - Home/title>
+  !-- Tailwind CSS CDN -->
+  script src="https://cdn.tailwindcss.com">/script>
+  !-- Google Material Icons -->
+  link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+  style>
     body {
-      background: #f3f4f6; /* light gray */
+      background-color: #f3f4f6; /* Light gray for light mode */
+      transition: background-color 0.3s ease, color 0.3s ease;
     }
-  </style>
-</head>
-<body class="flex flex-col min-h-screen">
-  <header class="bg-white shadow">
-    <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-      <h1 class="text-2xl font-bold text-purple-700">MyBlog</h1>
-      <div class="flex items-center space-x-4">
-        <input type="text" id="searchInput" placeholder="Search posts..." class="border border-gray-300 rounded-md p-2" />
-        <button id="searchBtn" class="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700">Search</button>
-        <button id="darkModeToggle" class="text-gray-700 hover:text-purple-600">
-          <span class="material-icons">dark_mode</span>
-        </button>
-        <button id="profileBtn" class="text-gray-700 hover:text-purple-600">
-          <span class="material-icons">account_circle</span>
-        </button>
-      </div>
-    </div>
-  </header>
+    html.dark body {
+      background-color: #121212; /* Dark background */
+      color: #e0e0e0;
+    }
+    .post-card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgb(0 0 0 / 0.05);
+      transition: box-shadow 0.2s ease;
+    }
+    html.dark .post-card {
+      background: #1e1e1e;
+      box-shadow: 0 4px 12px rgb(255 255 255 / 0.05);
+    }
+    .post-card:hover {
+      box-shadow: 0 8px 20px rgb(0 0 0 / 0.1);
+    }
+    html.dark .post-card:hover {
+      box-shadow: 0 8px 20px rgb(255 255 255 / 0.1);
+    }
+    /* Custom scrollbar for stories */
+    #stories::-webkit-scrollbar {
+      height: 6px;
+    }
+    #stories::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    #stories::-webkit-scrollbar-thumb {
+      background-color: #8b5cf6;
+      border-radius: 10px;
+    }
+  /style>
+/head>
+body class="flex flex-col min-h-screen transition-colors duration-300">
+  !-- Navigation Bar -->
+  header class="bg-white dark:bg-gray-900 shadow sticky top-0 z-50">
+    div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+      !-- Logo -->
+      a href="#" class="text-purple-700 dark:text-purple-400 font-extrabold text-3xl select-none">
+        MyBlog
+      /a>
 
-  <main class="flex-grow max-w-7xl mx-auto p-4">
-    <section id="stories" class="mb-6">
-      <h2 class="text-xl font-bold mb-4">Stories</h2>
-      <div class="flex space-x-4 overflow-x-auto">
-        <!-- Stories will be dynamically injected here -->
-      </div>
-    </section>
+      !-- Search Bar -->
+      div class="flex-1 max-w-xl mx-4 relative">
+        input id="searchInput" type="search" placeholder="Search posts by title, tag, or author..."
+          class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-800 px-4 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-800 dark:text-gray-100"
+          aria-label="Search posts" />
+        button id="searchBtn" aria-label="Search posts"
+          class="absolute right-1 top-1/2 -translate-y-1/2 text-purple-600 hover:text-purple-400 focus:outline-none">
+          span class="material-icons">search/span>
+        /button>
+      /div>
 
-    <section id="posts-section" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      <!-- Blog posts will be dynamically injected here -->
-    </section>
+      !-- Right Controls -->
+      div class="flex items-center space-x-4">
+        !-- Dark Mode Toggle -->
+        button id="darkModeToggle" aria-label="Toggle dark mode"
+          class="p-2 rounded-md bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500 text-purple-700 dark:text-purple-300 select-none transition-colors">
+          span class="material-icons" id="darkModeIcon">dark_mode/span>
+        /button>
 
-    <button id="addPostBtn" class="fixed bottom-4 right-4 bg-purple-600 text-white rounded-full p-4 shadow-lg hover:bg-purple-700">
-      <span class="material-icons">add</span>
-    </button>
-  </main>
+        !-- Profile Button -->
+        a href="profile.html"
+          class="px-4 py-2 text-purple-700 dark:text-purple-400 border border-purple-700 dark:border-purple-400 rounded-md font-semibold hover:bg-purple-100 dark:hover:bg-gray-700 transition-colors select-none">
+          Profile
+        /a>
+      /div>
+    /div>
+  /header>
 
-  <footer class="bg-white text-center py-4">
-    <p class="text-gray-600">© 2024 MyBlog. All rights reserved.</p>
-  </footer>
+  !-- Stories Section -->
+  section id="stories" class="max-w-7xl mx-auto px-6 py-4 flex space-x-4 overflow-x-auto scrollbar-hide select-none">
+    !-- Stories will be dynamically inserted here -->
+  /section>
 
-  <!-- Profile Modal -->
-  <div id="profileModal" class="fixed inset-0 z-50 hidden bg-black bg-opacity-50 flex items-center justify-center">
-    <div class="bg-white rounded-lg p-6 max-w-md w-full">
-      <h2 class="text-xl font-bold mb-4">Profile</h2>
-      <img id="profilePhoto" src="" alt="Profile Photo" class="w-16 h-16 rounded-full mb-4" />
-      <p id="profileName" class="font-semibold"></p>
-      <p id="profileEmail" class="text-gray-600"></p>
-      <h3 class="mt-4 font-semibold">Liked Posts:</h3>
-      <ul id="likedPostsList" class="list-disc pl-5"></ul>
-      <button id="closeProfileModal" class="mt-4 bg-purple-600 text-white px-4 py-2 rounded-md">Close</button>
-    </div>
-  </div>
+  !-- Posts Feed -->
+  main class="max-w-7xl mx-auto px-6 py-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    !-- Blog posts will be injected here -->
+  /main>
 
-  <script>
-    // Firebase config
+  !-- Floating Add Post Button -->
+  button id="addPostBtn"
+    class="fixed bottom-8 right-8 bg-purple-600 hover:bg-purple-700 text-white rounded-full p-5 shadow-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition"
+    title="Add New Post" aria-label="Add New Post">
+    span class="material-icons text-3xl">add/span>
+  /button>
+
+  script>
+    // Firebase initialization (replace with your own config)
     const firebaseConfig = {
       apiKey: "YOUR_API_KEY",
       authDomain: "YOUR_AUTH_DOMAIN",
@@ -80,111 +115,167 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    const postsSection = document.getElementById('posts-section');
-    const profileModal = document.getElementById('profileModal');
-    const profilePhoto = document.getElementById('profilePhoto');
-    const profileName = document.getElementById('profileName');
-    const profileEmail = document.getElementById('profileEmail');
-    const likedPostsList = document.getElementById('likedPostsList');
-    const logoutBtn = document.getElementById('logoutBtn');
-    const profileBtn = document.getElementById('profileBtn');
-    const closeProfileModal = document.getElementById('closeProfileModal');
+    // DOM Elements
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    const darkModeIcon = document.getElementById('darkModeIcon');
     const addPostBtn = document.getElementById('addPostBtn');
+    const postsContainer = document.querySelector('main');
+    const storiesContainer = document.getElementById('stories');
     const searchInput = document.getElementById('searchInput');
     const searchBtn = document.getElementById('searchBtn');
-    const darkModeToggle = document.getElementById('darkModeToggle');
-    const storiesSection = document.getElementById('stories');
 
-    // Load posts from Firestore
-    async function loadPosts() {
-      const snapshot = await db.collection('posts').orderBy('createdAt', 'desc').get();
-      postsSection.innerHTML = '';
-      snapshot.forEach(doc => {
-        const post = doc.data();
-        const postElement = document.createElement('div');
-        postElement.className = 'bg-white rounded-lg shadow p-4';
-        postElement.innerHTML = `
-          <h2 class="font-bold text-lg">${post.title}</h2>
-          <p>${post.content.slice(0, 100)}...</p>
-          <p class="text-gray-500 text-sm">By ${post.author} on ${new Date(post.createdAt.seconds * 1000).toLocaleDateString()}</p>
-          <button class="likeBtn bg-purple-600 text-white px-2 py-1 rounded-md" data-id="${doc.id}">Like</button>
-          <button class="commentBtn bg-gray-300 text-gray-700 px-2 py-1 rounded-md">Comment</button>
-          <button class="shareBtn bg-blue-500 text-white px-2 py-1 rounded-md">Share</button>
-        `;
-        postsSection.appendChild(postElement);
-      });
-    }
-
-    // Load user profile
-    async function loadUser Profile() {
-      const user = auth.currentUser ;
-      if (user) {
-        profilePhoto.src = user.photoURL || 'https://placehold.co/48x48/png?text=User ';
-        profileName.textContent = user.displayName || user.email;
-        profileEmail.textContent = user.email;
-
-        // Load liked posts
-        const likedPosts = await db.collection('users').doc(user.uid).get();
-        const likedPostsData = likedPosts.data().likedPosts || [];
-        likedPostsList.innerHTML = likedPostsData.map(postId => `<li>${postId}</li>`).join('');
+    // Dark mode persistent toggle
+    function setDarkMode(enabled) {
+      if (enabled) {
+        document.documentElement.classList.add('dark');
+        darkModeIcon.textContent = 'light_mode';
+        localStorage.setItem('darkMode', 'enabled');
+      } else {
+        document.documentElement.classList.remove('dark');
+        darkModeIcon.textContent = 'dark_mode';
+        localStorage.setItem('darkMode', 'disabled');
       }
     }
 
-    // Logout functionality
-    logoutBtn.addEventListener('click', () => {
-      auth.signOut().then(() => {
-        window.location.href = 'login.html';
-      });
+    // Initialize dark mode on page load
+    (function () {
+      const darkModeSetting = localStorage.getItem('darkMode');
+      if (darkModeSetting === 'enabled' || (!darkModeSetting && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        setDarkMode(true);
+      } else {
+        setDarkMode(false);
+      }
+    })();
+
+    darkModeToggle.addEventListener('click', () => {
+      setDarkMode(!document.documentElement.classList.contains('dark'));
     });
 
-    // Show profile modal
-    profileBtn.addEventListener('click', () => {
-      loadUser Profile();
-      profileModal.classList.remove('hidden');
+    // Auth state and initial data fetch
+    auth.onAuthStateChanged(user => {
+      if (!user) {
+        // Redirect to login if not authenticated
+        window.location.href = "login.html";
+        return;
+      }
+      loadStories();
+      loadPosts();
     });
 
-    // Close profile modal
-    closeProfileModal.addEventListener('click', () => {
-      profileModal.classList.add('hidden');
+    // Function to load stories
+    async function loadStories() {
+      try {
+        const snapshot = await db.collection('stories').orderBy('createdAt', 'desc').limit(10).get();
+        storiesContainer.innerHTML = '';
+        snapshot.forEach(doc => {
+          const story = doc.data();
+          const storyElem = document.createElement('div');
+          storyElem.className = 'flex-shrink-0 w-28 md:w-32 xl:w-36 border border-purple-300 rounded-lg overflow-hidden cursor-pointer hover:shadow-lg transition';
+          storyElem.innerHTML = `
+            img src="${story.imageURL || 'https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/2108234d-8c99-48ce-9975-711d9ecd36c4.png'}" alt="Story image"
+              class="w-full h-20 object-cover filter brightness-90" />
+            div class="p-2 bg-white dark:bg-gray-800">
+              p class="text-sm text-center font-semibold text-purple-700 truncate" title="${story.title}">${story.title}/p>
+              p class="text-xs text-center text-gray-600 dark:text-gray-400 line-clamp-2">${story.content || ''}/p>
+            /div>
+          `;
+          storiesContainer.appendChild(storyElem);
+        });
+      } catch (error) {
+        console.error('Failed to load stories:', error);
+      }
+    }
+
+    // Function to load posts
+    async function loadPosts() {
+      try {
+        const snapshot = await db.collection('posts').orderBy('createdAt', 'desc').limit(15).get();
+        postsContainer.innerHTML = '';
+        snapshot.forEach(doc => {
+          const post = doc.data();
+          const postDate = post.createdAt ? post.createdAt.toDate() : new Date();
+          const postElem = document.createElement('article');
+          postElem.className = 'post-card p-6 cursor-pointer flex flex-col justify-between h-full';
+          postElem.innerHTML = `
+            ${post.imageURL ? `img src="${post.imageURL}" alt="${post.title}" class="rounded-lg mb-4 object-cover h-48 w-full"/>` : ''}
+            div class="flex flex-col flex-grow">
+              h2 class="text-xl font-semibold text-purple-700 mb-1 truncate" title="${post.title}">${post.title}/h2>
+              p class="text-gray-700 dark:text-gray-300 flex-grow line-clamp-3">${post.content}/p>
+            /div>
+            footer class="mt-4 flex justify-between items-center text-gray-600 dark:text-gray-400 text-sm select-none">
+              span>${post.authorName || post.authorEmail || 'Unknown author'}/span>
+              time>${postDate.toLocaleDateString()}/time>
+            /footer>
+            div class="mt-3 flex space-x-3">
+              button class="like-btn flex items-center space-x-1 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded px-3 py-1" data-postid="${doc.id}" aria-label="Like post">
+                span class="material-icons text-base leading-none">thumb_up/span>span>Like/span>
+              /button>
+              button class="comment-btn flex items-center space-x-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium rounded px-3 py-1" data-postid="${doc.id}" aria-label="Comment on post">
+                span class="material-icons text-base leading-none">chat_bubble/span>span>Comment/span>
+              /button>
+              button class="share-btn flex items-center space-x-1 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded px-3 py-1" data-postid="${doc.id}" aria-label="Share post">
+                span class="material-icons text-base leading-none">share/span>span>Share/span>
+              /button>
+            /div>
+          `;
+          postsContainer.appendChild(postElem);
+        });
+      } catch (error) {
+        console.error('Failed to load posts:', error);
+      }
+    }
+
+    // Floating 'Add Post' button event
+    addPostBtn.addEventListener('click', () => {
+      alert('Add Post modal or page could be opened here.');
+      // Implement your post creation modal/panel here
     });
 
-    // Like post functionality
-    postsSection.addEventListener('click', async (e) => {
-      if (e.target.classList.contains('likeBtn')) {
-        const postId = e.target.getAttribute('data-id');
-        const user = auth.currentUser ;
-        if (user) {
-          await db.collection('users').doc(user.uid).update({
+    // Event delegation for like/comment/share buttons
+    postsContainer.addEventListener('click', async (e) => {
+      const button = e.target.closest('button');
+      if (!button) return;
+      if (button.classList.contains('like-btn')) {
+        const postId = button.dataset.postid;
+        const user = auth.currentUser;
+        if (!user) return alert('Login to like posts.');
+
+        // Add postId to user's likedPosts in Firestore
+        const userRef = db.collection('users').doc(user.uid);
+        try {
+          await userRef.update({
             likedPosts: firebase.firestore.FieldValue.arrayUnion(postId)
           });
           alert('Post liked!');
-        } else {
-          alert('You need to be logged in to like posts.');
+        } catch {
+          // If likedPosts field doesn't exist, set it
+          await userRef.set({ likedPosts: [postId] }, { merge: true });
+          alert('Post liked!');
         }
       }
+      // Comment and Share can be implemented similarly
     });
 
-    // Add post button functionality
-    addPostBtn.addEventListener('click', () => {
-      // Open a modal or side panel for adding a new post
-      // This can be implemented as per your design preference
-      alert('Add Post functionality to be implemented!');
+    // Profile button: redirect to profile.html
+    profileBtn.addEventListener('click', () => {
+      window.location.href = 'profile.html';
     });
 
     // Search functionality
     searchBtn.addEventListener('click', () => {
       const query = searchInput.value.trim().toLowerCase();
-      // Implement search logic here
-      alert(`Search functionality for: ${query}`);
-    });
+      if (!query) return alert('Enter search terms.');
 
-    // Dark mode toggle
-    darkModeToggle.addEventListener('click', () => {
-      document.body.classList.toggle('dark');
+      // Basic client-side search (can be extended)
+      const posts = document.querySelectorAll('.post-card h2');
+      posts.forEach(postTitle => {
+        if (postTitle.textContent.toLowerCase().includes(query)) {
+          postTitle.closest('.post-card').style.display = '';
+        } else {
+          postTitle.closest('.post-card').style.display = 'none';
+        }
+      });
     });
-
-    // Initial load
-    loadPosts();
-  </script>
-</body>
-</html>
+  /script>
+/body>
+/html>
