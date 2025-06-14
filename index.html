@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" >
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -40,9 +40,7 @@
           </svg>
         </div>
         <div id="userSection" class="flex items-center space-x-4">
-          <!-- Will dynamically show login button or profile menu -->
           <button id="loginBtn" class="hidden bg-purple-600 hover:bg-purple-700 text-white px-4 py-1 rounded-md font-semibold transition">Login</button>
-
           <div id="userMenu" class="hidden relative" tabindex="0">
             <button id="userMenuBtn" class="flex items-center space-x-2 focus:outline-none">
               <span id="userNameDisplay" class="font-semibold text-purple-700"></span>
@@ -64,10 +62,27 @@
   <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <h1 class="text-4xl font-extrabold text-purple-700 mb-8 text-center">Latest Blog Posts</h1>
 
+    <!-- Categories/Tags Section -->
+    <section class="mb-6">
+      <h2 class="text-2xl font-semibold text-gray-700 mb-4">Categories</h2>
+      <div class="flex space-x-4">
+        <button class="bg-purple-500 text-white px-4 py-2 rounded-md">Technology</button>
+        <button class="bg-purple-500 text-white px-4 py-2 rounded-md">Lifestyle</button>
+        <button class="bg-purple-500 text-white px-4 py-2 rounded-md">Travel</button>
+        <button class="bg-purple-500 text-white px-4 py-2 rounded-md">Food</button>
+      </div>
+    </section>
+
     <section id="postsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       <!-- Blog posts will be rendered here -->
       <p class="col-span-full text-center text-gray-500">Loading posts...</p>
     </section>
+
+    <!-- Pagination -->
+    <div id="pagination" class="flex justify-center mt-6">
+      <button id="prevPageBtn" class="bg-purple-600 text-white px-4 py-2 rounded-md mr-2">Previous</button>
+      <button id="nextPageBtn" class="bg-purple-600 text-white px-4 py-2 rounded-md">Next</button>
+    </div>
   </main>
 
   <!-- FOOTER -->
@@ -93,6 +108,8 @@
 
   const postsContainer = document.getElementById('postsContainer');
   const searchInput = document.getElementById('searchInput');
+  const prevPageBtn = document.getElementById('prevPageBtn');
+  const nextPageBtn = document.getElementById('nextPageBtn');
 
   const loginBtn = document.getElementById('loginBtn');
   const userSection = document.getElementById('userSection');
@@ -104,7 +121,9 @@
 
   let allPosts = [];
   let likedPosts = [];
-  let currentUser = null;
+  let currentUser  = null;
+  let currentPage = 1;
+  const postsPerPage = 6;
 
   // Helper: format snippet text (show first 120 chars)
   function getSnippet(text) {
@@ -120,7 +139,11 @@
       return;
     }
     postsContainer.innerHTML = '';
-    posts.forEach(post => {
+    const startIndex = (currentPage - 1) * postsPerPage;
+    const endIndex = startIndex + postsPerPage;
+    const paginatedPosts = posts.slice(startIndex, endIndex);
+
+    paginatedPosts.forEach(post => {
       const isLiked = likedPosts.includes(post.id);
 
       const card = document.createElement('article');
@@ -150,11 +173,15 @@
 
       postsContainer.appendChild(card);
     });
+
+    // Update pagination buttons
+    prevPageBtn.style.display = currentPage === 1 ? 'none' : 'inline-block';
+    nextPageBtn.style.display = endIndex >= posts.length ? 'none' : 'inline-block';
   }
 
   // Toggle like status
   async function toggleLike(postId, buttonEl) {
-    if (!currentUser) {
+    if (!currentUser ) {
       // Guest: store likes in localStorage
       if (likedPosts.includes(postId)) {
         likedPosts = likedPosts.filter(id => id !== postId);
@@ -170,7 +197,7 @@
     }
 
     // Authenticated user: update Firestore likedPosts array
-    const userRef = db.collection('users').doc(currentUser.uid);
+    const userRef = db.collection('users').doc(currentUser .uid);
     try {
       if (likedPosts.includes(postId)) {
         // Remove like
@@ -245,9 +272,9 @@
 
   // Retrieve previously stored time spent
   function loadTimeSpent() {
-    if (currentUser) {
+    if (currentUser ) {
       // For logged in user, fetch from Firestore
-      db.collection('users').doc(currentUser.uid).get()
+      db.collection('users').doc(currentUser .uid).get()
         .then(doc => {
           if(doc.exists && doc.data().timeSpent) {
             timeSpentMs = doc.data().timeSpent;
@@ -266,9 +293,9 @@
     timeSpentMs += duration;
     startTime = Date.now();
 
-    if (currentUser) {
+    if (currentUser ) {
       try {
-        await db.collection('users').doc(currentUser.uid).set({
+        await db.collection('users').doc(currentUser .uid).set({
           timeSpent: timeSpentMs
         }, { merge: true });
       } catch (err) {
@@ -288,8 +315,8 @@
   // Initialize
   auth.onAuthStateChanged(async (user) => {
     if (user) {
-      currentUser = user;
-      userNameDisplay.textContent = user.displayName || user.email || "User";
+      currentUser  = user;
+      userNameDisplay.textContent = user.displayName || user.email || "User ";
       loginBtn.classList.add('hidden');
       userMenu.classList.remove('hidden');
 
@@ -301,7 +328,7 @@
         likedPosts = [];
       }
     } else {
-      currentUser = null;
+      currentUser  = null;
       loginBtn.classList.remove('hidden');
       userMenu.classList.add('hidden');
 
@@ -326,11 +353,26 @@
       snapshot.forEach(doc => {
         allPosts.push({ ...doc.data(), id: doc.id });
       });
-      filterPosts(searchInput.value);
+      renderPosts(allPosts);
     } catch (err) {
       postsContainer.innerHTML = `<p class="col-span-full text-center text-red-600">Failed to load posts: ${err.message}</p>`;
     }
   }
+
+  // Pagination functionality
+  prevPageBtn.addEventListener('click', () => {
+    if (currentPage > 1) {
+      currentPage--;
+      renderPosts(allPosts);
+    }
+  });
+
+  nextPageBtn.addEventListener('click', () => {
+    if (currentPage * postsPerPage < allPosts.length) {
+      currentPage++;
+      renderPosts(allPosts);
+    }
+  });
 
 </script>
 </body>
