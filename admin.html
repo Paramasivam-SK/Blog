@@ -1,278 +1,230 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Admin Panel - Blogging Site</title>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+  <title>MyBlog - Admin Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
   <style>
     body {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      min-height: 100vh;
-      padding: 1rem;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
+      background-color: #f3f4f6;
+      transition: background-color 0.3s ease, color 0.3s ease;
     }
-    #postsList > div:hover {
-      box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
-      background-color: #f3e8ff;
+    html.dark body {
+      background-color: #121212;
+      color: #e0e0e0;
+    }
+    .post-card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgb(0 0 0 / 0.05);
+      transition: box-shadow 0.2s ease;
+    }
+    html.dark .post-card {
+      background: #1e1e1e;
+      box-shadow: 0 4px 12px rgb(255 255 255 / 0.05);
+    }
+    .post-card:hover {
+      box-shadow: 0 8px 20px rgb(0 0 0 / 0.1);
+    }
+    html.dark .post-card:hover {
+      box-shadow: 0 8px 20px rgb(255 255 255 / 0.1);
+    }
+    #stories::-webkit-scrollbar {
+      height: 6px;
+    }
+    #stories::-webkit-scrollbar-thumb {
+      background-color: #8b5cf6;
+      border-radius: 10px;
     }
   </style>
 </head>
-<body>
-  <main class="bg-white max-w-4xl w-full rounded-xl shadow-lg p-8 space-y-8">
-    <h1 class="text-4xl font-bold text-purple-700 text-center mb-6">Admin Panel</h1>
+<body class="flex flex-col min-h-screen transition-colors duration-300">
 
-    <section id="postManagement" class="space-y-6">
-      <h2 class="text-3xl font-semibold border-b border-gray-300 pb-1 mb-4">Manage Blog Posts</h2>
-      <form id="postForm" class="space-y-4 max-w-full">
-        <input type="hidden" id="postId" />
-        <div>
-          <input type="text" id="postTitle" placeholder="Post Title" class="w-full rounded-md border border-gray-300 p-3 focus:outline-none focus:ring-2 focus:ring-purple-500 text-lg font-semibold" maxlength="150" required />
-        </div>
-        <div>
-          <textarea id="postContent" rows="5" placeholder="Post Content (Markdown supported)" class="w-full rounded-md border border-gray-300 p-3 focus:outline-none focus:ring-2 focus:ring-purple-500" required></textarea>
-        </div>
-        <div class="flex gap-3 justify-end">
-          <button type="button" id="resetPostBtn" class="bg-gray-300 hover:bg-gray-400 text-gray-900 px-5 py-2 rounded-md font-semibold transition">Clear</button>
-          <button type="submit" id="savePostBtn" class="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-md font-semibold transition">Save Post</button>
-        </div>
-      </form>
+  <!-- Admin Navigation -->
+  <header class="bg-white dark:bg-gray-900 shadow sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+      <!-- Logo -->
+      <a href="admin.html" class="text-purple-700 dark:text-purple-400 font-extrabold text-3xl select-none">
+        Admin Panel
+      </a>
 
-      <div id="postsList" class="max-h-[400px] overflow-y-auto border border-gray-300 rounded-md p-4 grid gap-3">
-        <p class="text-gray-500 text-center">Loading posts...</p>
+      <!-- Search -->
+      <div class="flex-1 max-w-xl mx-4 relative">
+        <input id="searchInput" type="search" placeholder="Search posts or users..."
+          class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-800 px-4 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-800 dark:text-gray-100" />
+        <button id="searchBtn" class="absolute right-1 top-1/2 -translate-y-1/2 text-purple-600 hover:text-purple-400">
+          <span class="material-icons">search</span>
+        </button>
       </div>
-    </section>
 
-    <section id="userInteractions" class="space-y-6">
-      <h2 class="text-3xl font-semibold border-b border-gray-300 pb-1 mb-4">User Interaction Details</h2>
-      <div id="userLoginsList" class="max-h-[400px] overflow-y-auto border border-gray-300 rounded-md p-4 grid gap-3">
-        <p class="text-gray-500 text-center">Loading user data...</p>
+      <!-- Controls -->
+      <div class="flex items-center space-x-4">
+        <!-- Dark Mode -->
+        <button id="darkModeToggle" class="p-2 rounded-md bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-purple-700 dark:text-purple-300">
+          <span class="material-icons" id="darkModeIcon">dark_mode</span>
+        </button>
+
+        <!-- Admin Tag -->
+        <span class="text-sm px-3 py-1 bg-purple-100 dark:bg-gray-700 text-purple-700 dark:text-purple-300 rounded-full font-medium select-none">Admin</span>
+
+        <!-- Logout -->
+        <button onclick="logout()" class="px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded-md text-sm">Logout</button>
       </div>
-    </section>
-
-    <div class="flex justify-center pt-4">
-      <button id="logoutBtn" class="bg-red-600 hover:bg-red-700 text-white font-semibold px-6 py-2 rounded-md shadow-md transition">Logout</button>
     </div>
+  </header>
+
+  <!-- Stories -->
+  <section id="stories" class="max-w-7xl mx-auto px-6 py-4 flex space-x-4 overflow-x-auto">
+    <!-- Admin-managed stories -->
+  </section>
+
+  <!-- Posts Grid -->
+  <main class="max-w-7xl mx-auto px-6 py-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    <!-- Posts injected here -->
   </main>
 
-<script>
-  const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT.firebaseapp.com",
-    projectId: "YOUR_PROJECT",
-    storageBucket: "YOUR_PROJECT.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
-  };
+  <!-- Floating Admin Add Button -->
+  <button id="addPostBtn"
+    class="fixed bottom-8 right-8 bg-purple-600 hover:bg-purple-700 text-white rounded-full p-5 shadow-lg"
+    title="Add New Post or Story">
+    <span class="material-icons text-3xl">add</span>
+  </button>
 
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
+  <!-- Firebase and Logic -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
 
-  const postForm = document.getElementById("postForm");
-  const postIdInput = document.getElementById("postId");
-  const postTitleInput = document.getElementById("postTitle");
-  const postContentInput = document.getElementById("postContent");
-  const savePostBtn = document.getElementById("savePostBtn");
-  const resetPostBtn = document.getElementById("resetPostBtn");
-  const postsList = document.getElementById("postsList");
-  const userLoginsList = document.getElementById("userLoginsList");
-  const logoutBtn = document.getElementById("logoutBtn");
+  <script>
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_AUTH_DOMAIN",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_STORAGE_BUCKET",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID",
+    };
 
-  let editingPostId = null;
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
 
-  function showMessage(msg, isError = false) {
-    alert(msg);
-  }
+    // DOM Elements
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    const darkModeIcon = document.getElementById('darkModeIcon');
+    const addPostBtn = document.getElementById('addPostBtn');
+    const postsContainer = document.querySelector('main');
+    const storiesContainer = document.getElementById('stories');
+    const searchInput = document.getElementById('searchInput');
+    const searchBtn = document.getElementById('searchBtn');
 
-  async function loadPosts() {
-    postsList.innerHTML = "<p class='text-gray-500 text-center'>Loading posts...</p>";
-    try {
-      const snapshot = await db.collection("posts").orderBy("createdAt", "desc").get();
-      if (snapshot.empty) {
-        postsList.innerHTML = "<p class='text-gray-500 text-center'>No posts found.</p>";
-        return;
-      }
-      postsList.innerHTML = "";
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        const div = document.createElement("div");
-        div.className = "border border-gray-300 rounded-md p-3 bg-purple-50 flex justify-between items-center";
-
-        const titleEl = document.createElement("div");
-        titleEl.className = "font-semibold text-lg text-purple-700 truncate max-w-[70%]";
-        titleEl.textContent = data.title || "(Untitled)";
-        titleEl.title = titleEl.textContent;
-
-        const buttonsDiv = document.createElement("div");
-        buttonsDiv.className = "flex gap-2";
-
-        const editBtn = document.createElement("button");
-        editBtn.className = "bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded-md font-semibold";
-        editBtn.textContent = "Edit";
-        editBtn.addEventListener("click", () => {
-          editingPostId = doc.id;
-          postIdInput.value = doc.id;
-          postTitleInput.value = data.title || "";
-          postContentInput.value = data.content || "";
-          savePostBtn.textContent = "Update Post";
-          window.scrollTo({ top: 0, behavior: "smooth" });
-        });
-
-        const deleteBtn = document.createElement("button");
-        deleteBtn.className = "bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md font-semibold";
-        deleteBtn.textContent = "Delete";
-        deleteBtn.addEventListener("click", async () => {
-          if (confirm(`Delete post "${data.title || "(Untitled)"}"? This action cannot be undone.`)) {
-            try {
-              await db.collection("posts").doc(doc.id).delete();
-              showMessage("Post deleted.");
-              if (editingPostId === doc.id) resetForm();
-              loadPosts();
-            } catch (err) {
-              showMessage("Failed to delete post: " + err.message, true);
-            }
-          }
-        });
-
-        buttonsDiv.appendChild(editBtn);
-        buttonsDiv.appendChild(deleteBtn);
-
-        div.appendChild(titleEl);
-        div.appendChild(buttonsDiv);
-
-        postsList.appendChild(div);
-      });
-    } catch (err) {
-      postsList.innerHTML = `<p class='text-red-600 text-center'>Failed to load posts: ${err.message}</p>`;
-    }
-  }
-
-  function resetForm() {
-    editingPostId = null;
-    postIdInput.value = "";
-    postTitleInput.value = "";
-    postContentInput.value = "";
-    savePostBtn.textContent = "Save Post";
-  }
-
-  resetPostBtn.addEventListener("click", (e) => {
-    e.preventDefault();
-    resetForm();
-  });
-
-  postForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const title = postTitleInput.value.trim();
-    const content = postContentInput.value.trim();
-    if (!title || !content) {
-      showMessage("Post title and content are required.", true);
-      return;
-    }
-
-    savePostBtn.disabled = true;
-    savePostBtn.textContent = editingPostId ? "Updating..." : "Saving...";
-
-    try {
-      if (editingPostId) {
-        await db.collection("posts").doc(editingPostId).update({
-          title,
-          content,
-          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        showMessage("Post updated successfully.");
+    function setDarkMode(enabled) {
+      if (enabled) {
+        document.documentElement.classList.add('dark');
+        darkModeIcon.textContent = 'light_mode';
+        localStorage.setItem('darkMode', 'enabled');
       } else {
-        await db.collection("posts").add({
-          title,
-          content,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        showMessage("Post created successfully.");
+        document.documentElement.classList.remove('dark');
+        darkModeIcon.textContent = 'dark_mode';
+        localStorage.setItem('darkMode', 'disabled');
       }
-      resetForm();
-      await loadPosts();
-    } catch (err) {
-      showMessage("Failed to save post: " + err.message, true);
-    } finally {
-      savePostBtn.disabled = false;
-      savePostBtn.textContent = "Save Post";
     }
-  });
 
-  async function loadUserLogins() {
-    userLoginsList.innerHTML = "<p class='text-gray-500 text-center'>Loading user data...</p>";
-    try {
-      const snapshot = await db.collection("users").orderBy("lastLogin", "desc").get();
-      if (snapshot.empty) {
-        userLoginsList.innerHTML = "<p class='text-gray-500 text-center'>No users found.</p>";
+    (function () {
+      const setting = localStorage.getItem('darkMode');
+      if (setting === 'enabled' || (!setting && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        setDarkMode(true);
+      }
+    })();
+
+    darkModeToggle.addEventListener('click', () => {
+      setDarkMode(!document.documentElement.classList.contains('dark'));
+    });
+
+    auth.onAuthStateChanged(user => {
+      if (!user || !['paramasivamsk2811@gmail.com', 'sathishkavi1517@gmail.com'].includes(user.email)) {
+        window.location.href = "login.html";
         return;
       }
-      userLoginsList.innerHTML = "";
-      snapshot.forEach(doc => {
-        const userData = doc.data();
-        const div = document.createElement("div");
-        div.className = "border border-gray-300 rounded-md p-3 bg-purple-50";
+      loadStories();
+      loadPosts();
+    });
 
-        const emailDiv = document.createElement("p");
-        emailDiv.innerHTML = `<span class="font-semibold">Email:</span> ${userData.email || "(no email)"}`;
-        const nameDiv = document.createElement("p");
-        if (userData.name) nameDiv.innerHTML = `<span class="font-semibold">Name:</span> ${userData.name}`;
-
-        const lastLoginDiv = document.createElement("p");
-        if (userData.lastLogin) {
-          const d = userData.lastLogin.toDate();
-          lastLoginDiv.innerHTML = `<span class="font-semibold">Last Login:</span> ${d.toLocaleString()}`;
-        }
-
-        const timeSpentDiv = document.createElement("p");
-        if (userData.timeSpent) {
-          const ms = userData.timeSpent;
-          let seconds = Math.floor(ms/1000);
-          let hours = Math.floor(seconds / 3600);
-          let minutes = Math.floor((seconds % 3600) / 60);
-          seconds = seconds % 60;
-          let timeStr = [];
-          if(hours) timeStr.push(hours + "h");
-          if(minutes) timeStr.push(minutes + "m");
-          if(seconds || timeStr.length === 0) timeStr.push(seconds + "s");
-          timeSpentDiv.innerHTML = `<span class="font-semibold">Time Spent:</span> ${timeStr.join(" ")}`;
-        }
-
-        const likedPostsDiv = document.createElement("p");
-        if (Array.isArray(userData.likedPosts)) {
-          likedPostsDiv.innerHTML = `<span class="font-semibold">Liked Posts:</span> ${userData.likedPosts.length}`;
-        }
-
-        div.appendChild(emailDiv);
-        if(userData.name) div.appendChild(nameDiv);
-        if(userData.lastLogin) div.appendChild(lastLoginDiv);
-        if(userData.timeSpent) div.appendChild(timeSpentDiv);
-        if(Array.isArray(userData.likedPosts)) div.appendChild(likedPostsDiv);
-
-        userLoginsList.appendChild(div);
-      });
-    } catch (err) {
-      userLoginsList.innerHTML = `<p class='text-red-600 text-center'>Failed to load user data: ${err.message}</p>`;
+    async function loadStories() {
+      try {
+        const snapshot = await db.collection('stories').orderBy('createdAt', 'desc').limit(10).get();
+        storiesContainer.innerHTML = '';
+        snapshot.forEach(doc => {
+          const story = doc.data();
+          const div = document.createElement('div');
+          div.className = 'w-28 md:w-32 xl:w-36 border border-purple-300 rounded-lg overflow-hidden cursor-pointer hover:shadow-lg';
+          div.innerHTML = `
+            <img src="${story.imageURL || 'https://placehold.co/150x150?text=Story'}" class="w-full h-20 object-cover"/>
+            <div class="p-2 bg-white dark:bg-gray-800">
+              <p class="text-sm font-semibold text-purple-700 text-center truncate" title="${story.title}">${story.title}</p>
+              <p class="text-xs text-center text-gray-600 dark:text-gray-400 line-clamp-2">${story.content || ''}</p>
+            </div>
+          `;
+          storiesContainer.appendChild(div);
+        });
+      } catch (error) {
+        console.error('Error loading stories:', error);
+      }
     }
-  }
 
-  // Initial load
-  loadPosts();
-  loadUserLogins();
+    async function loadPosts() {
+      try {
+        const snapshot = await db.collection('posts').orderBy('createdAt', 'desc').limit(20).get();
+        postsContainer.innerHTML = '';
+        snapshot.forEach(doc => {
+          const post = doc.data();
+          const postDate = post.createdAt?.toDate() || new Date();
+          const article = document.createElement('article');
+          article.className = 'post-card p-6';
+          article.innerHTML = `
+            ${post.imageURL ? `<img src="${post.imageURL}" class="rounded-lg mb-4 object-cover h-48 w-full"/>` : ''}
+            <h2 class="text-xl font-semibold text-purple-700 mb-1 truncate">${post.title}</h2>
+            <p class="text-gray-700 dark:text-gray-300 line-clamp-3">${post.content}</p>
+            <footer class="mt-4 flex justify-between text-sm text-gray-600 dark:text-gray-400">
+              <span>${post.authorName || post.authorEmail || 'Unknown'}</span>
+              <time>${postDate.toLocaleDateString()}</time>
+            </footer>
+            <div class="mt-3 flex space-x-3">
+              <button class="like-btn bg-purple-600 hover:bg-purple-700 text-white rounded px-3 py-1">Like</button>
+              <button class="comment-btn bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded px-3 py-1">Comment</button>
+              <button class="delete-btn bg-red-500 hover:bg-red-600 text-white rounded px-3 py-1" onclick="deletePost('${doc.id}')">Delete</button>
+            </div>
+          `;
+          postsContainer.appendChild(article);
+        });
+      } catch (error) {
+        console.error('Error loading posts:', error);
+      }
+    }
 
-  // Optional Logout button handling, if needed
-  // logoutBtn.addEventListener("click", async () => {
-  //   try {
-  //     await firebase.auth().signOut();
-  //     window.location.href = "login.html";
-  //   } catch (err) {
-  //     alert("Logout failed: " + err.message);
-  //   }
-  // });
-</script>
+    async function deletePost(postId) {
+      if (confirm('Are you sure you want to delete this post?')) {
+        try {
+          await db.collection('posts').doc(postId).delete();
+          loadPosts();
+        } catch (e) {
+          console.error('Error deleting post:', e);
+        }
+      }
+    }
+
+    addPostBtn.addEventListener('click', () => {
+      window.location.href = "addPost.html"; // You can change to a modal if preferred
+    });
+
+    function logout() {
+      auth.signOut().then(() => {
+        window.location.href = "login.html";
+      });
+    }
+  </script>
 </body>
 </html>
-
