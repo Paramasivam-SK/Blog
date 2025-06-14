@@ -161,7 +161,7 @@
 
     showStatus(`Welcome, ${name}! You are browsing as a guest.`);
     setTimeout(() => {
-      window.location.href = "index.html";
+      window.location.href = "main.html";
     }, 1500);
   });
 
@@ -189,7 +189,7 @@
         } else {
           showStatus(`Welcome ${user.displayName || user.email}! Redirecting to blog...`);
           setTimeout(() => {
-            window.location.href = "index.html";
+            window.location.href = "main.html";
           }, 1000);
         }
       })
